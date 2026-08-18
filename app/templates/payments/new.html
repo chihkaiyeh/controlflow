@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}新增請款{% endblock %}
+{% block content %}
+<h3 class="mb-4">新增請款</h3>
+<form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:640px">
+  <div class="row">
+    <div class="col-md-8 mb-3">
+      <label class="form-label">對象（收款人/廠商）</label>
+      <input type="text" name="payee" class="form-control">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">發票號碼</label>
+      <input type="text" name="invoice_no" class="form-control">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">所屬專案</label>
+      <select name="project_id" class="form-select">
+        <option value="">（不指定）</option>
+        {% for p in projects %}
+        <option value="{{ p.id }}">{{ p.code }} - {{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">關聯採購單</label>
+      <select name="procurement_id" class="form-select">
+        <option value="">（不指定）</option>
+        {% for pr in procs %}
+        <option value="{{ pr.id }}">{{ pr.code }} - {{ pr.item_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-8 mb-3">
+      <label class="form-label">金額 <span class="text-danger">*</span></label>
+      <input type="number" step="0.01" name="amount" class="form-control" required>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">幣別</label>
+      <input type="text" name="currency" class="form-control" value="TWD">
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">說明</label>
+    <textarea name="reason" class="form-control" rows="2"></textarea>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">送出請款</button>
+    <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary">取消</a>
+  </div>
+</form>
+{% endblock %}

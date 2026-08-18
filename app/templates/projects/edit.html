@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}編輯專案{% endblock %}
+{% block content %}
+<h3 class="mb-4">編輯專案 {{ p.code }}</h3>
+<form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:760px">
+  <div class="mb-3">
+    <label class="form-label">專案名稱 <span class="text-danger">*</span></label>
+    <input type="text" name="name" class="form-control" required value="{{ p.name }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">描述</label>
+    <textarea name="description" class="form-control" rows="2">{{ p.description or '' }}</textarea>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label class="form-label">狀態</label>
+      <select name="status" class="form-select">
+        <option value="planning" {% if p.status=='planning' %}selected{% endif %}>規劃中</option>
+        <option value="active" {% if p.status=='active' %}selected{% endif %}>進行中</option>
+        <option value="closed" {% if p.status=='closed' %}selected{% endif %}>已結案</option>
+      </select>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">優先層級</label>
+      <select name="priority" class="form-select">
+        <option value="high" {% if p.priority=='high' %}selected{% endif %}>高</option>
+        <option value="medium" {% if p.priority=='medium' %}selected{% endif %}>中</option>
+        <option value="low" {% if p.priority=='low' %}selected{% endif %}>低</option>
+      </select>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">預算 (TWD)</label>
+      <input type="number" step="0.01" name="budget" class="form-control" value="{{ p.budget or 0 }}">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">起始日期</label>
+      <input type="date" name="start_date" class="form-control"
+             value="{{ p.start_date or '' }}">
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">預計完成日期</label>
+      <input type="date" name="due_date" class="form-control"
+             value="{{ p.due_date or '' }}">
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">執行風險評估</label>
+    <textarea name="risk_assessment" class="form-control" rows="3">{{ p.risk_assessment or '' }}</textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">利害關係人</label>
+    <textarea name="stakeholders" class="form-control" rows="2">{{ p.stakeholders or '' }}</textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">目標品質</label>
+    <textarea name="target_quality" class="form-control" rows="2">{{ p.target_quality or '' }}</textarea>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">儲存</button>
+    <a href="{{ url_for('projects.detail', pid=p.id) }}" class="btn btn-outline-secondary">取消</a>
+  </div>
+</form>
+{% endblock %}

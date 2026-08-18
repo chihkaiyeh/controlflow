@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}成員管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">成員管理</h3>
+  <a href="{{ url_for('users.new') }}" class="btn btn-primary">+ 新增成員</a>
+</div>
+
+<div class="alert alert-info">說明：admin 為系統管理員（含成員管理權限）；manager 可核准採購與請款；finance 為財務（可核准/付款）；warehouse 為倉管（可管理庫存）；employee 為一般員工。</div>
+
+<table class="table table-hover bg-white align-middle">
+  <thead>
+    <tr><th>帳號</th><th>姓名</th><th>角色</th><th>狀態</th><th>操作</th></tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>{{ u.full_name or '-' }}</td>
+      <td><span class="badge bg-secondary">{{ ROLE_LABEL.get(u.role, u.role) }}</span></td>
+      <td>{% if u.active %}<span class="badge bg-success">啟用</span>{% else %}<span class="badge bg-secondary">停用</span>{% endif %}</td>
+      <td>
+        <form method="post" action="{{ url_for('users.set_role', uid=u.id) }}" class="d-inline">
+          <select name="role" class="form-select form-select-sm d-inline" style="width:auto"
+                  onchange="this.form.submit()">
+            {% for r in ['admin','manager','finance','warehouse','employee'] %}
+            <option value="{{ r }}" {% if u.role==r %}selected{% endif %}>{{ ROLE_LABEL.get(r, r) }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        <form method="post" action="{{ url_for('users.toggle', uid=u.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-outline-{{ 'secondary' if u.active else 'success' }}">
+            {{ '停用' if u.active else '啟用' }}</button>
+        </form>
+        <form method="post" action="{{ url_for('users.reset_pw', uid=u.id) }}" class="d-inline">
+          <input type="password" name="password" class="form-control form-control-sm d-inline"
+                 style="width:120px" placeholder="新密碼" required>
+          <button class="btn btn-sm btn-outline-warning">重設密碼</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

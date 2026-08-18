@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}新增成員{% endblock %}
+{% block content %}
+<h3 class="mb-4">新增成員</h3>
+<form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:560px">
+  <div class="mb-3">
+    <label class="form-label">帳號 <span class="text-danger">*</span></label>
+    <input type="text" name="username" class="form-control" required autofocus>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">姓名</label>
+    <input type="text" name="full_name" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">初始密碼 <span class="text-danger">*</span></label>
+    <input type="password" name="password" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">角色</label>
+    <select name="role" class="form-select">
+      {% for r in ROLES %}
+      <option value="{{ r }}">{{ ROLE_LABEL.get(r, r) }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">建立</button>
+    <a href="{{ url_for('users.index') }}" class="btn btn-outline-secondary">取消</a>
+  </div>
+</form>
+{% endblock %}

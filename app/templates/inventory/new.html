@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}新增庫存品項{% endblock %}
+{% block content %}
+<h3 class="mb-4">新增庫存品項</h3>
+<form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:640px">
+  <div class="row">
+    <div class="col-md-8 mb-3">
+      <label class="form-label">品名 <span class="text-danger">*</span></label>
+      <input type="text" name="name" class="form-control" required autofocus>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">分類</label>
+      <input type="text" name="category" class="form-control">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">單位</label>
+      <input type="text" name="unit" class="form-control" placeholder="個/盒/公尺">
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">存放位置</label>
+      <input type="text" name="location" class="form-control">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label class="form-label">單價</label>
+      <input type="number" step="0.01" name="unit_price" class="form-control" value="0">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">初始數量</label>
+      <input type="number" step="0.01" name="quantity" class="form-control" value="0">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">補貨點</label>
+      <input type="number" step="0.01" name="reorder_level" class="form-control" value="0">
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">建立</button>
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-outline-secondary">取消</a>
+  </div>
+</form>
+{% endblock %}

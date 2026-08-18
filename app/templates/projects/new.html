@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}新增專案{% endblock %}
+{% block content %}
+<h3 class="mb-4">新增專案</h3>
+<form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:760px">
+  <div class="mb-3">
+    <label class="form-label">專案名稱 <span class="text-danger">*</span></label>
+    <input type="text" name="name" class="form-control" required autofocus>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">描述</label>
+    <textarea name="description" class="form-control" rows="2"></textarea>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label class="form-label">狀態</label>
+      <select name="status" class="form-select">
+        <option value="planning">規劃中</option>
+        <option value="active">進行中</option>
+        <option value="closed">已結案</option>
+      </select>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">優先層級</label>
+      <select name="priority" class="form-select">
+        <option value="high">高</option>
+        <option value="medium" selected>中</option>
+        <option value="low">低</option>
+      </select>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">預算 (TWD)</label>
+      <input type="number" step="0.01" name="budget" class="form-control" value="0">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">起始日期</label>
+      <input type="date" name="start_date" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">預計完成日期</label>
+      <input type="date" name="due_date" class="form-control">
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">執行風險評估</label>
+    <textarea name="risk_assessment" class="form-control" rows="3" placeholder="技術/時程/成本/外部依賴等風險"></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">利害關係人</label>
+    <textarea name="stakeholders" class="form-control" rows="2" placeholder="客戶、內部部門、合作廠商等，用逗號或換行分隔"></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">目標品質</label>
+    <textarea name="target_quality" class="form-control" rows="2" placeholder="規格、良率、驗收標準等"></textarea>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">建立</button>
+    <a href="{{ url_for('projects.index') }}" class="btn btn-outline-secondary">取消</a>
+  </div>
+</form>
+{% endblock %}

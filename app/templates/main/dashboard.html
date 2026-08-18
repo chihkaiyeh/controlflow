@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}儀表板{% endblock %}
+{% block content %}
+<h3 class="mb-4">儀表板</h3>
+<div class="row g-3">
+  <div class="col-6 col-md-3">
+    <div class="card text-white bg-primary shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">專案數</h6>
+        <h2 class="mb-0">{{ stats.projects }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-white bg-info shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">採購申請</h6>
+        <h2 class="mb-0">{{ stats.procurements }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-white bg-success shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">請款單</h6>
+        <h2 class="mb-0">{{ stats.payments }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-white bg-warning shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">低庫存警示</h6>
+        <h2 class="mb-0">{{ stats.low_stock }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h5 class="mt-5 mb-3">最近採購申請</h5>
+{% if recent_proc %}
+<table class="table table-sm table-hover bg-white">
+  <thead>
+    <tr><th>單號</th><th>品項</th><th>專案</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    {% for p in recent_proc %}
+    <tr>
+      <td>{{ p.code }}</td>
+      <td>{{ p.item_name }}</td>
+      <td>{{ p.project.name if p.project else '-' }}</td>
+      <td>{{ p.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">尚無採購申請資料。</p>
+{% endif %}
+{% endblock %}

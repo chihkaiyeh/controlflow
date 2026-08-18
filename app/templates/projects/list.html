@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}專案管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">專案管理</h3>
+  <a href="{{ url_for('projects.new') }}" class="btn btn-primary">+ 新增專案</a>
+</div>
+
+{% if projects %}
+<table class="table table-hover bg-white align-middle">
+  <thead>
+    <tr>
+      <th>代碼</th><th>名稱</th><th>負責人</th><th>優先級</th>
+      <th>時程</th><th>狀態</th><th class="text-end">預算</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in projects %}
+    <tr>
+      <td><span class="badge bg-secondary">{{ p.code }}</span></td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.owner.full_name if p.owner else '-' }}</td>
+      <td>
+        {% if p.priority == 'high' %}<span class="badge bg-danger">高</span>
+        {% elif p.priority == 'low' %}<span class="badge bg-secondary">低</span>
+        {% else %}<span class="badge bg-warning">中</span>{% endif %}
+      </td>
+      <td>
+        {% if p.start_date or p.due_date %}
+          {{ p.start_date or '?' }} ~ {{ p.due_date or '?' }}
+        {% else %}-{% endif %}
+      </td>
+      <td>
+        {% if p.status == 'active' %}<span class="badge bg-success">進行中</span>
+        {% elif p.status == 'closed' %}<span class="badge bg-dark">已結案</span>
+        {% else %}<span class="badge bg-warning">規劃中</span>{% endif %}
+      </td>
+      <td class="text-end">{{ '%.0f'|format(p.budget) }}</td>
+      <td><a href="{{ url_for('projects.detail', pid=p.id) }}" class="btn btn-sm btn-outline-secondary">詳情</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-secondary">尚無專案，點右上角「新增專案」建立第一個。</div>
+{% endif %}
+{% endblock %}

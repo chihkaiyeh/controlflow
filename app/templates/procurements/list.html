@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}採購申請{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">採購申請</h3>
+  <a href="{{ url_for('procurements.new') }}" class="btn btn-primary">+ 新增申請</a>
+</div>
+
+{% set can_approve = current_user.role in ('admin','manager') %}
+
+{% if items %}
+<table class="table table-hover bg-white align-middle">
+  <thead>
+    <tr>
+      <th>單號</th><th>品項</th><th>專案</th><th>申請人</th>
+      <th class="text-end">預估</th><th>狀態</th>
+      {% if can_approve %}<th>操作</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for pr in items %}
+    <tr>
+      <td><span class="badge bg-secondary">{{ pr.code }}</span></td>
+      <td>{{ pr.item_name }}<br><small class="text-muted">{{ pr.spec or '' }}</small></td>
+      <td>{{ pr.project.name if pr.project else '-' }}</td>
+      <td>{{ pr.requester.full_name if pr.requester else '-' }}</td>
+      <td class="text-end">{{ '%.0f'|format(pr.estimated_price or 0) }}</td>
+      <td>
+        {% if pr.status == 'approved' %}<span class="badge bg-success">已核准</span>
+        {% elif pr.status == 'rejected' %}<span class="badge bg-danger">已駁回</span>
+        {% elif pr.status == 'ordered' %}<span class="badge bg-info">已下單</span>
+        {% else %}<span class="badge bg-warning">待核准</span>{% endif %}
+      </td>
+      {% if can_approve %}
+      <td>
+        {% if pr.status == 'submitted' %}
+        <form method="post" action="{{ url_for('procurements.approve', pid=pr.id) }}" class="d-inline">
+          <button name="decision" value="approve" class="btn btn-sm btn-success">核准</button>
+          <button name="decision" value="reject" class="btn btn-sm btn-outline-danger">駁回</button>
+        </form>
+        {% elif pr.status == 'approved' %}
+        <form method="post" action="{{ url_for('procurements.ordered', pid=pr.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-info">標記已下單</button>
+        </form>
+        {% else %}-{% endif %}
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-secondary">尚無採購申請。</div>
+{% endif %}
+{% endblock %}

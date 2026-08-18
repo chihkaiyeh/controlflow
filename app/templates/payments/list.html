@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}請款{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">請款</h3>
+  <a href="{{ url_for('payments.new') }}" class="btn btn-primary">+ 新增請款</a>
+</div>
+
+{% set can_act = current_user.role in ('admin','manager','finance') %}
+
+{% if items %}
+<table class="table table-hover bg-white align-middle">
+  <thead>
+    <tr>
+      <th>單號</th><th>對象</th><th>專案</th><th>採購單</th>
+      <th class="text-end">金額</th><th>狀態</th>
+      {% if can_act %}<th>操作</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for py in items %}
+    <tr>
+      <td><span class="badge bg-secondary">{{ py.code }}</span></td>
+      <td>{{ py.payee }}<br><small class="text-muted">發票 {{ py.invoice_no or '無' }}</small></td>
+      <td>{{ py.project.name if py.project else '-' }}</td>
+      <td>{{ py.procurement.code if py.procurement else '-' }}</td>
+      <td class="text-end">{{ '%.0f'|format(py.amount or 0) }} {{ py.currency }}</td>
+      <td>
+        {% if py.status == 'approved' %}<span class="badge bg-success">已核准</span>
+        {% elif py.status == 'rejected' %}<span class="badge bg-danger">已駁回</span>
+        {% elif py.status == 'paid' %}<span class="badge bg-primary">已付款</span>
+        {% else %}<span class="badge bg-warning">待核准</span>{% endif %}
+      </td>
+      {% if can_act %}
+      <td>
+        {% if py.status == 'submitted' %}
+        <form method="post" action="{{ url_for('payments.approve', pid=py.id) }}" class="d-inline">
+          <button name="decision" value="approve" class="btn btn-sm btn-success">核准</button>
+          <button name="decision" value="reject" class="btn btn-sm btn-outline-danger">駁回</button>
+        </form>
+        {% elif py.status == 'approved' %}
+        <form method="post" action="{{ url_for('payments.paid', pid=py.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-primary">標記已付款</button>
+        </form>
+        {% else %}-{% endif %}
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-secondary">尚無請款紀錄。</div>
+{% endif %}
+{% endblock %}

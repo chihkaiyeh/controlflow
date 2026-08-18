@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}耗材庫存{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">耗材庫存{% if low_only %}（低庫存警示）{% endif %}</h3>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('inventory.low') }}" class="btn btn-outline-warning">低庫存檢視</a>
+    {% if current_user.role in ('admin','warehouse') %}
+    <a href="{{ url_for('inventory.new') }}" class="btn btn-primary">+ 新增品項</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if items %}
+<table class="table table-hover bg-white align-middle">
+  <thead>
+    <tr><th>代碼</th><th>品名</th><th>分類</th><th>單位</th>
+      <th class="text-end">現有</th><th class="text-end">補貨點</th><th>狀態</th>
+      {% if current_user.role in ('admin','warehouse') %}<th>出入庫</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for it in items %}
+    {% set low = it.quantity <= it.reorder_level %}
+    <tr {% if low %}class="table-warning"{% endif %}>
+      <td><span class="badge bg-secondary">{{ it.code }}</span></td>
+      <td>{{ it.name }}<br><small class="text-muted">{{ it.location or '' }}</small></td>
+      <td>{{ it.category or '-' }}</td>
+      <td>{{ it.unit or '-' }}</td>
+      <td class="text-end">{{ '%.2f'|format(it.quantity) }}</td>
+      <td class="text-end">{{ '%.2f'|format(it.reorder_level) }}</td>
+      <td>{% if low %}<span class="badge bg-danger">低庫存</span>{% else %}<span class="badge bg-success">正常</span>{% endif %}</td>
+      {% if current_user.role in ('admin','warehouse') %}
+      <td>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal"
+          data-bs-target="#mvModal" data-iid="{{ it.id }}" data-name="{{ it.name }}" data-dir="in">入庫</button>
+        <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+          data-bs-target="#mvModal" data-iid="{{ it.id }}" data-name="{{ it.name }}" data-dir="out">出庫</button>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-secondary">尚無庫存品項。</div>
+{% endif %}
+
+{% if current_user.role in ('admin','warehouse') %}
+<!-- 出入庫 Modal -->
+<div class="modal fade" id="mvModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" id="mvForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mvTitle">出入庫</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="direction" id="mvDir">
+        <p>品項：<strong id="mvName"></strong></p>
+        <div class="mb-3">
+          <label class="form-label">數量</label>
+          <input type="number" step="0.01" name="qty" class="form-control" required min="0.01">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">備註</label>
+          <input type="text" name="note" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="submit">確認</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('mvModal').addEventListener('show.bs.modal', function(e){
+  const btn = e.relatedTarget;
+  const dir = btn.getAttribute('data-dir');
+  document.getElementById('mvDir').value = dir;
+  document.getElementById('mvName').textContent = btn.getAttribute('data-name');
+  document.getElementById('mvTitle').textContent = dir === 'in' ? '入庫' : '出庫';
+  document.getElementById('mvForm').action = '/inventory/' + btn.getAttribute('data-iid') + '/move';
+});
+</script>
+{% endif %}
+{% endblock %}
