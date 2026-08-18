@@ -1,5 +1,7 @@
 # 公司內控系統 (ControlFlow)
 
+[![CI](https://github.com/chihkaiyeh/controlflow/actions/workflows/ci.yml/badge.svg)](https://github.com/chihkaiyeh/controlflow/actions/workflows/ci.yml)
+
 一套自架的企業內控網頁系統，管理公司的 **專案、採購申請、請款、耗材庫存**，並含成員與權限管理。
 
 ## 技術架構
