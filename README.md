@@ -44,3 +44,6 @@ python smoke_projects_v2.py  # 專案擴充 + 成員管理
 ## 注意
 - 目前使用 Flask 開發伺服器，**生產環境請改用 WSGI 伺服器（如 gunicorn / waitress）並關閉 debug**。
 - 本系統預設為內網/本機使用；若要對外，需另行設定 HTTPS 與防火牆。
+
+## 文件
+- [外網連線指引手冊](docs/external-access-guide.md)：讓外網員工連線、HTTPS、安全清單、開機自啟、備份
