@@ -1,13 +1,15 @@
 """請款模組冒煙測試，含核准流程、權限、關聯採購單。"""
 from app import create_app
-from app.models import User, Project, ProcurementRequest, PaymentRequest, db
+from app.models import (User, Project, ProcurementRequest, PaymentRequest, db)
+from app.utils import next_code
 
 app = create_app()
 
 with app.app_context():
-    proj = Project.query.filter_by(code="PRJ-0002").first()
+    proj = Project.query.filter_by(status="active").order_by(Project.id.desc()).first()
     if not proj:
-        proj = Project(code="PRJ-TEST", name="t", status="active", owner_id=1, budget=1)
+        proj = Project(code=next_code(Project, "PRJ"), name="t",
+                       status="active", owner_id=1, budget=1)
         db.session.add(proj); db.session.commit()
     proj_id = proj.id
     fin = User.query.filter_by(username="fin1").first()
@@ -17,7 +19,8 @@ with app.app_context():
     # 一筆已核准的採購單，供請款關聯
     pr = ProcurementRequest.query.filter_by(status="approved").first()
     if not pr:
-        pr = ProcurementRequest(code="PRC-LINK", project_id=proj_id, requester_id=1,
+        pr = ProcurementRequest(code=next_code(ProcurementRequest, "PRC"),
+                                project_id=proj_id, requester_id=1,
                                 item_name="link", qty=1, estimated_price=100,
                                 status="approved")
         db.session.add(pr); db.session.commit()
