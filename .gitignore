@@ -9,6 +9,7 @@ uploads/
 
 # 認證 / 暫存
 cj.txt
+.env
 
 # Python
 __pycache__/

@@ -11,8 +11,9 @@ class Config:
         "sqlite:///" + os.path.join(basedir, "app.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # 附件上傳設定
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(basedir), "uploads")
+    # 附件上傳設定（可用環境變數 UPLOAD_FOLDER 覆蓋，便於指向 NAS 掛載目錄）
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER") or \
+        os.path.join(os.path.dirname(basedir), "uploads")
     ALLOWED_EXTENSIONS = {
         "pdf", "png", "jpg", "jpeg", "gif", "doc", "docx",
         "xls", "xlsx", "ppt", "pptx", "txt", "csv", "zip",

@@ -1,0 +1,20 @@
+services:
+  controlflow:
+    build: .
+    container_name: controlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      # 請改成強隨機值，或用 .env 檔案提供（見下）
+      - SECRET_KEY=change-me-to-a-random-string
+      # DB 與附件都放在掛載的 volume 裡，容器重啟/重建資料不丟
+      - DATABASE_URL=sqlite:////data/app.db
+      - UPLOAD_FOLDER=/data/uploads
+    volumes:
+      # 把 /data 掛到具名 volume（也可用 :/path/on/nas 指向 NAS 掛載目錄）
+      - controlflow_data:/data
+
+volumes:
+  controlflow_data:

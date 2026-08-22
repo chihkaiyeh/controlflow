@@ -47,3 +47,4 @@ python smoke_projects_v2.py  # 專案擴充 + 成員管理
 
 ## 文件
 - [外網連線指引手冊](docs/external-access-guide.md)：讓外網員工連線、HTTPS、安全清單、開機自啟、備份
+- [NAS 部署指引手冊](docs/nas-deployment-guide.md)：Docker 容器化、用 NAS 當儲存與備份
