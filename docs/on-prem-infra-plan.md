@@ -10,7 +10,7 @@
 
 | 設備 | 型號 | 結論 |
 |------|------|------|
-| 小主機 | **HP Z2 Mini**（G9 / G1i） | ✅ 非常合適。迷你靜音、GbE 網孔；儲存有 **2× M.2 NVMe + 1× 2.5" SATA**；跑 Ubuntu + Docker 綽綽有餘。注意：**無內建 3.5" 碟位**，資料碟需用 2.5" SATA SSD 或全走外接抽取盒。 |
+| 小主機 | **HP Z2 Mini G3** | ✅ 合適。迷你靜音、GbE 網孔；儲存有 **1× M.2 NVMe (PCIe Gen3 x1) + 1× 2.5" SATA**（G3 的 M.2 為 Gen3 x1，對內控低負載無影響）；跑 Ubuntu + Docker 綽綽有餘。注意：**無內建 3.5" 碟位**，資料碟需用 2.5" SATA SSD 或全走外接抽取盒。 |
 | 抽取盒 | **HIKVISION 磁碟陣列硬碟櫃** | ⚠️ 多數此類櫃為**盒內硬體 RAID**（按鈕/開關設 RAID0/1/JBOD），經 USB3 把「一顆已合併的碟」給主機。Ubuntu 只會看到**一顆碟**，無法在其上做軟體 RAID（mdadm/ZFS）。→ 當「自動鏡像的資料碟」可用，但**備份仍要走抽取冷備 + Mage20 Pro**。 |
 
 > 若您的 HIKVISION 櫃型號支援「JBOD / 每碟獨立透過 USB 暴露」模式，請告知，可改走軟體 RAID 方案。
@@ -36,9 +36,9 @@
                                        │  :80/:443
                                        ▼
                         ┌─────────────────────────────┐
-                        │   HP Z2 Mini (Ubuntu Server) │
-                        │   M.2#1: 系統碟 (OS+Docker)  │
-                        │   M.2#2/2.5": 熱資料 (可選)  │
+                        │   HP Z2 Mini G3 (Ubuntu Server) │
+                        │   M.2: 系統碟 (OS+Docker)       │
+                        │   2.5" SATA: 熱資料 (可選)       │
                         │   ┌───────────────────────┐  │
                         │   │ Docker Engine          │  │
                         │   │  ├─ caddy     (反向代理 │  │
@@ -82,7 +82,7 @@
 ## 四、關鍵決策
 
 ### 1. 作業系統：Ubuntu Server 22.04 LTS
-免費、文件多、Docker 支援好。Z2 Mini 的 RTL/Intel 網卡與 USB3 均原生支援。
+免費、文件多、Docker 支援好。Z2 Mini G3 的 Intel 網卡與 USB3 均原生支援。
 
 ### 2. 一切容器化
 內控系統已提供 `Dockerfile` + `docker-compose.yml`，掛載卷指向陣列櫃的 `/mnt/data`。
