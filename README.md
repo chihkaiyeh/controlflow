@@ -22,15 +22,23 @@
 ## 快速開始
 ```bash
 pip install -r requirements.txt
-python seed.py          # 建立資料庫 + 初始 admin 帳號
+# 必須提供初始管理員密碼（至少 10 字元），不再有寫死的預設密碼
+ADMIN_PASSWORD='你的強密碼' python seed.py
 python run.py           # 啟動，預設 http://localhost:5000
 ```
-初始帳號：`admin / admin123`（請務必上線後修改密碼）。
+初始帳號為 `admin`，密碼就是上面設定的 `ADMIN_PASSWORD`，請妥善保管。
+登入後仍建議到「成員管理」為每位使用者建立專屬帳號。
 
 ## 設定
-- `SECRET_KEY`：建議以環境變數覆蓋預設值
+- `SECRET_KEY`：正式部署**必須**以環境變數設定；`FLASK_ENV=production` 時若仍用開發預設值會拒絕啟動
+- `ADMIN_PASSWORD`：`seed.py` 建立初始管理員時必填（至少 10 字元）
 - `DATABASE_URL`：設定後可改用 PostgreSQL
 - 附件上傳上限 16MB，允許類型見 `app/config.py` 的 `ALLOWED_EXTENSIONS`
+
+## 權限與流程（2026-11 加固）
+- 全站 POST 皆有 CSRF 保護；表單由 `csrf_token()` 產生隱藏欄位
+- 專案的新增／編輯／結案／附件上傳與刪除僅 `admin`、`manager` 可執行；所有登入者皆可瀏覽
+- 採購與請款有狀態機：已駁回不能改回核准，待核准不能直接標為已付款/已下單
 
 ## 測試
 ```bash
@@ -48,5 +56,8 @@ python smoke_projects_v2.py  # 專案擴充 + 成員管理
 ## 文件
 - [外網連線指引手冊](docs/external-access-guide.md)：讓外網員工連線、HTTPS、安全清單、開機自啟、備份
 - [NAS 部署指引](docs/nas-deployment-guide.md)：Docker 容器化、用 NAS 當儲存與備份
-- [Windows 原生部署指引](docs/windows-deployment-guide.md)：Z2 Mini G3 不重灌、waitress 生產模式、Unitek 2-bay JBOD、開機自啟、備份、HTTPS
-- [地端設備架構規劃](docs/on-prem-infra-plan.md)：辦公室小主機 + 抽取盒陣列，內控/網站/DB 地端運行
+- [Windows 原生部署指引](docs/windows-deployment-guide.md)：Z2 Mini G3 不重灌、waitress 生產模式、**Unitek 2-bay JBOD**（Windows 路線）、開機自啟、備份、HTTPS
+- [地端設備架構規劃](docs/on-prem-infra-plan.md)：**Ubuntu + Docker 路線**，Z2 Mini + **ACASIS 雙盤 JBOD + mdadm RAID1**，內控/網站/DB 地端運行
+
+> 兩份文件的硬碟配置不同是刻意安排的：Windows 路線用 Unitek JBOD（兩碟獨立、靠備份流程），
+> Ubuntu 路線用 ACASIS JBOD + 主機 mdadm RAID1。依你實際選的作業系統看對應文件即可。

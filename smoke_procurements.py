@@ -3,6 +3,7 @@ from app import create_app
 from app.models import User, Project, ProcurementRequest, db
 
 app = create_app()
+app.config["WTF_CSRF_ENABLED"] = False  # 冒煙測試直接 POST，不帶 CSRF token
 
 with app.app_context():
     # 確保有一個進行中的專案與一個員工帳號

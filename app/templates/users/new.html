@@ -3,6 +3,7 @@
 {% block content %}
 <h3 class="mb-4">新增成員</h3>
 <form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:560px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">
     <label class="form-label">帳號 <span class="text-danger">*</span></label>
     <input type="text" name="username" class="form-control" required autofocus>

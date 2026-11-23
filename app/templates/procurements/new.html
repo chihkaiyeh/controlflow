@@ -3,6 +3,7 @@
 {% block content %}
 <h3 class="mb-4">新增採購申請</h3>
 <form method="post" class="bg-white p-4 rounded shadow-sm" style="max-width:640px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">
     <label class="form-label">所屬專案</label>
     <select name="project_id" class="form-select">

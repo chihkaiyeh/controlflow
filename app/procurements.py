@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 
 from . import db
 from .models import Project, ProcurementRequest, User
-from .utils import next_code
+from .utils import next_code, can_transition, status_label
 
 proc_bp = Blueprint("procurements", __name__)
 
@@ -59,13 +59,19 @@ def approve(pid):
         return redirect(url_for("procurements.index"))
     pr = ProcurementRequest.query.get_or_404(pid)
     decision = request.form.get("decision")
-    if decision == "reject":
-        pr.status = "rejected"
-        flash(f"{pr.code} 已駁回", "warning")
-    else:
-        pr.status = "approved"
+    if decision not in ("approve", "reject"):
+        flash("無效的核准動作", "danger")
+        return redirect(url_for("procurements.index"))
+    target = "rejected" if decision == "reject" else "approved"
+    if not can_transition("procurement", pr.status, target):
+        flash(f"{pr.code} 目前為「{status_label(pr.status)}」，無法變更為「{status_label(target)}」", "warning")
+        return redirect(url_for("procurements.index"))
+    pr.status = target
+    if target == "approved":
         pr.approver_id = current_user.id
         flash(f"{pr.code} 已核准", "success")
+    else:
+        flash(f"{pr.code} 已駁回", "warning")
     db.session.commit()
     return redirect(url_for("procurements.index"))
 
@@ -77,6 +83,9 @@ def ordered(pid):
         flash("無權操作", "danger")
         return redirect(url_for("procurements.index"))
     pr = ProcurementRequest.query.get_or_404(pid)
+    if not can_transition("procurement", pr.status, "ordered"):
+        flash(f"{pr.code} 目前為「{status_label(pr.status)}」，無法標記為已下單", "warning")
+        return redirect(url_for("procurements.index"))
     pr.status = "ordered"
     db.session.commit()
     flash(f"{pr.code} 標記為已下單", "info")

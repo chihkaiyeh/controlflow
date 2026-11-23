@@ -10,8 +10,23 @@ from . import db
 from .models import (Project, ProcurementRequest, PaymentRequest, User,
                      ProjectAttachment)
 from .utils import next_code, parse_date, allowed_file, secure_name, human_size
+from .permissions import role_required
 
 projects_bp = Blueprint("projects", __name__)
+
+# 可管理專案的角色；一般員工只能瀏覽專案與附件
+PROJECT_MANAGERS = ("admin", "manager")
+
+
+def _owner_id_from_form(fallback):
+    """從表單解析負責人；只接受啟用中的使用者，否則沿用原值。"""
+    raw = request.form.get("owner_id")
+    if raw and raw.isdigit():
+        user = User.query.get(int(raw))
+        if user and user.active:
+            return user.id
+    return fallback
+
 
 PRIORITY_LABEL = {"high": "高", "medium": "中", "low": "低"}
 
@@ -31,6 +46,7 @@ def index():
 
 @projects_bp.route("/new", methods=["GET", "POST"])
 @login_required
+@role_required(*PROJECT_MANAGERS)
 def new():
     users = User.query.filter_by(active=True).all()
     if request.method == "POST":
@@ -49,7 +65,7 @@ def new():
                 risk_assessment=request.form.get("risk_assessment", ""),
                 stakeholders=request.form.get("stakeholders", ""),
                 target_quality=request.form.get("target_quality", ""),
-                owner_id=current_user.id,
+                owner_id=_owner_id_from_form(current_user.id),
                 budget=float(request.form.get("budget") or 0),
             )
             db.session.add(p)
@@ -79,6 +95,7 @@ def detail(pid):
 
 @projects_bp.route("/<int:pid>/edit", methods=["GET", "POST"])
 @login_required
+@role_required(*PROJECT_MANAGERS)
 def edit(pid):
     p = Project.query.get_or_404(pid)
     users = User.query.filter_by(active=True).all()
@@ -92,6 +109,7 @@ def edit(pid):
         p.risk_assessment = request.form.get("risk_assessment", "")
         p.stakeholders = request.form.get("stakeholders", "")
         p.target_quality = request.form.get("target_quality", "")
+        p.owner_id = _owner_id_from_form(p.owner_id)
         p.budget = float(request.form.get("budget") or 0)
         db.session.commit()
         flash(f"{p.code} 已更新", "success")
@@ -102,6 +120,7 @@ def edit(pid):
 
 @projects_bp.route("/<int:pid>/close", methods=["POST"])
 @login_required
+@role_required(*PROJECT_MANAGERS)
 def close(pid):
     p = Project.query.get_or_404(pid)
     p.status = "closed"
@@ -113,6 +132,7 @@ def close(pid):
 # ---- 附件 ----
 @projects_bp.route("/<int:pid>/upload", methods=["POST"])
 @login_required
+@role_required(*PROJECT_MANAGERS)
 def upload(pid):
     p = Project.query.get_or_404(pid)
     f = request.files.get("file")
@@ -156,6 +176,7 @@ def attachment(pid, aid):
 
 @projects_bp.route("/<int:pid>/attachment/<int:aid>/delete", methods=["POST"])
 @login_required
+@role_required(*PROJECT_MANAGERS)
 def attachment_delete(pid, aid):
     att = ProjectAttachment.query.get_or_404(aid)
     if att.project_id != pid:

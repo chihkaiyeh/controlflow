@@ -5,6 +5,7 @@ from app import create_app
 from app.models import Project, ProjectAttachment, User, db
 
 app = create_app()
+app.config["WTF_CSRF_ENABLED"] = False  # 冒煙測試直接 POST，不帶 CSRF token
 
 
 def login(client, u, p):

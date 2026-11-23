@@ -4,6 +4,7 @@ from app.models import (User, Project, ProcurementRequest, PaymentRequest, db)
 from app.utils import next_code
 
 app = create_app()
+app.config["WTF_CSRF_ENABLED"] = False  # 冒煙測試直接 POST，不帶 CSRF token
 
 with app.app_context():
     proj = Project.query.filter_by(status="active").order_by(Project.id.desc()).first()

@@ -3,6 +3,11 @@
 > 本文檔為**規劃層級**：架構圖、採購清單、關鍵決策。
 > 不含逐條安裝指令；實作細節請參考同倉的
 > [NAS 部署指引](nas-deployment-guide.md) 與 [外網連線指引](external-access-guide.md)。
+>
+> **路線說明**：本文是 **Ubuntu + Docker 路線**，硬碟盒用 **ACASIS JBOD + 主機 mdadm RAID1**。
+> 若選擇不重灌、留在 Windows 11 Pro，請改看
+> [Windows 原生部署指引](windows-deployment-guide.md)，該路線用 **Unitek JBOD + 3-2-1 備份**，不做 mdadm。
+> 兩者差異是刻意的，請勿混用。
 
 ---
 

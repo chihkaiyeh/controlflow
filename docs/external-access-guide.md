@@ -17,8 +17,15 @@
 pip install -r requirements.txt        # 已含 waitress
 # Windows PowerShell：
 $env:FLASK_ENV="production"
+$env:SECRET_KEY="強隨機值"             # production 模式沒設會拒絕啟動
 python run.py
 # 訊息出現「生產模式 (waitress, debug 關閉)」即代表成功
+```
+
+首次建立資料庫也要改用新的初始化方式（不再有 `admin123`）：
+```bash
+$env:ADMIN_PASSWORD="你的強密碼（至少10字元）"
+python seed.py
 ```
 
 也可註冊成 Windows 排程/服務，讓公司電腦重開機後自動啟動（見附錄 A）。
@@ -104,8 +111,9 @@ ngrok http 5000
 
 - [ ] 系統已用**生產模式**啟動（debug 關閉）
 - [ ] 對外網址**全程 HTTPS**（憑證有效、自動續期）
-- [ ] 修改預設 admin 密碼（`admin / admin123`），並用「成員管理」頁建立各員工專屬帳號，按角色（employee/manager/finance/warehouse）給權限
-- [ ] `SECRET_KEY` 改用環境變數設定（不要留預設值）
+- [ ] 修改預設管理員：`seed.py` 以 `ADMIN_PASSWORD` 建立 admin（至少 10 字元），沒有殘留 `admin123`；並用「成員管理」頁建立各員工專屬帳號，按角色（employee/manager/finance/warehouse）給權限
+- [ ] `SECRET_KEY` 改用環境變數設定（不要留預設值；production 模式會拒絕啟動）
+- [ ] 確認所有 POST 表單都有 CSRF token（程式碼已內建）
 - [ ] 路由器/防火牆只開必要的 443，關掉其他對外埠
 - [ ] 確認 `.gitignore` 已排除 `app.db`、`uploads/`（這些含公司資料，絕不上傳）
 - [ ] 定期備份 `app.db`（公司所有專案/採購/請款/庫存資料都在這）
@@ -124,22 +132,36 @@ ngrok http 5000
 
 ## 附錄 A：讓系統開機自啟（Windows 排程）
 
-用 Windows 工作排程器，讓公司電腦登入/開機後自動以生產模式啟動：
+**不要在工作排程器的「動作」裡直接跑 `python run.py`**：環境變數（`FLASK_ENV`、
+`SECRET_KEY`、`DATABASE_URL`、`UPLOAD_FOLDER`）在工作排程器裡沒有可靠的設定方式，
+而且 production 模式現在會檢查 `SECRET_KEY`。
+
+正確做法是把所有環境變數寫進 `start.bat`（範例見
+[Windows 原生部署指引](windows-deployment-guide.md) 第五節），然後：
 
 1. 工作排程器 → 建立基本工作。
-2. 觸發程序：選「當電腦啟動時」或「使用者登入時」。
-3. 動作：啟動程式 `python`，引數 `run.py`，「起始位置」設為專案目錄（如 `C:\Users\chihk\internal-control`）。
-4. 在同一動作前先設定環境變數 `FLASK_ENV=production`（可在「編輯動作」的「新增引數」前用 `set` 或在工作裡設定）。
+2. 觸發程序：選「當電腦啟動時」；勾「不論使用者是否登入都執行」與「以最高權限執行」。
+3. 動作：啟動程式 `C:\controlflow\start.bat`，「開始位置」設 `C:\controlflow`。
+4. 設定：勾「如果工作失敗，則每 1 分鐘重新啟動，最多 3 次」。
+5. 存檔後再手動執行一次，確認 `curl.exe http://localhost:5000/login` 回 200。
 
-> 更穩健可改用 `nssm` 把 `python run.py` 註冊成 Windows 服務。
+> 更穩健的做法是用 `nssm` 把 `start.bat` 註冊成 Windows **服務**，有統一的啟停、
+> 失敗重啟與事件紀錄；工作排程器適合作為簡易替代方案。
 
 ## 附錄 B：備份與還原
 
 ```bash
-# 備份（複製整個 db 檔即可）
-copy app.db app.db.bak.2026xxxx
+# 備份：用 SQLite 在線快照，不要直接 copy 正在寫入的 app.db
+python -c "import sqlite3; a=sqlite3.connect('app.db'); b=sqlite3.connect('app.db.bak.20261123'); a.backup(b); b.close(); a.close()"
 
-# 還原
-copy app.db.bak.2026xxxx app.db
+# 驗證快照
+python -c "import sqlite3; c=sqlite3.connect('app.db.bak.20261123'); print(c.execute('PRAGMA integrity_check').fetchone()[0])"
+# 應輸出 ok
+
+# 還原：先停掉服務，再用快照覆蓋
+copy app.db.bak.20261123 app.db
 ```
-建議每天自動備份一次（排程任務 + 上面的 copy 指令）。
+
+Windows 上的完整批次檔（含冷備碟、NAS、`integrity_check` 與時間戳）見
+[Windows 原生部署指引](windows-deployment-guide.md) 第九節。
+建議每天自動備份一次，**每月至少做一次還原演練**。
