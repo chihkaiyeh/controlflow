@@ -46,7 +46,7 @@ with app.test_client() as client:
     print("[OK] 員工無法核准（權限隔離正常）")
 
     # --- admin 登入並核准 ---
-    login(client, "admin", "admin123")
+    login(client, "admin", "admin12345")
     r = client.post(f"/procurements/{pr.id}/approve", data={"decision": "approve"},
                     follow_redirects=True)
     assert r.status_code == 200

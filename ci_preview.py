@@ -14,7 +14,7 @@ with app.app_context():
     from app.models import User
     if not User.query.filter_by(username="admin").first():
         u = User(username="admin", full_name="系統管理員", role="admin")
-        u.set_password("admin123")
+        u.set_password("admin12345")
         db.session.add(u); db.session.commit()
         print("seed OK")
 

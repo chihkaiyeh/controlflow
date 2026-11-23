@@ -14,7 +14,7 @@ def login(client, u, p):
 
 
 with app.test_client() as client:
-    login(client, "admin", "admin123")
+    login(client, "admin", "admin12345")
 
     # 1) 新增專案（含新欄位）
     r = client.post("/projects/new", data={

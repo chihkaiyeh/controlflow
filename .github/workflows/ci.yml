@@ -26,7 +26,7 @@ jobs:
         env:
           DATABASE_URL: "sqlite:///${{ github.workspace }}/ci_test.db"
           SECRET_KEY: "ci-secret-key"
-          ADMIN_PASSWORD: "admin123"  # 僅測試用，正式部署請用強密碼
+          ADMIN_PASSWORD: "admin12345"  # 僅測試用，正式部署請用強密碼
         run: python seed.py
 
       - name: Run smoke tests
