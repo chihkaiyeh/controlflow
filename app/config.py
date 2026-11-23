@@ -2,10 +2,13 @@ import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# 開發用預設值；生產環境必須以 SECRET_KEY 環境變數覆蓋
+DEFAULT_SECRET_KEY = "dev-secret-change-me"
+
 
 class Config:
-    # 生產環境請用環境變數覆蓋此值
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-change-me"
+    # 生產環境請用環境變數覆蓋此值（create_app 會在 production 檢查）
+    SECRET_KEY = os.environ.get("SECRET_KEY") or DEFAULT_SECRET_KEY
     # 未來要換 PostgreSQL 只需設定 DATABASE_URL 環境變數
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or \
         "sqlite:///" + os.path.join(basedir, "app.db")

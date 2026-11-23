@@ -3,6 +3,7 @@ from app import create_app
 from app.models import User, db
 
 app = create_app()
+app.config["WTF_CSRF_ENABLED"] = False  # 冒煙測試直接 POST，不帶 CSRF token
 
 with app.test_client() as client:
     # 1) 登入頁可訪問
@@ -16,7 +17,7 @@ with app.test_client() as client:
     print("[OK] GET / (未登入) 被擋 ->", r.status_code)
 
     # 3) 用 admin 登入
-    r = client.post("/login", data={"username": "admin", "password": "admin123"},
+    r = client.post("/login", data={"username": "admin", "password": "admin12345"},
                     follow_redirects=True)
     assert r.status_code == 200, f"login post {r.status_code}"
     # 登入成功並保持 session：再訪問受保護首頁應回 200（不再被 302 擋掉）

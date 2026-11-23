@@ -58,6 +58,37 @@ def human_size(n):
     return f"{n:.1f}TB"
 
 
+# 簽核狀態機：只允許白名單內的轉換，避免已駁回被改回核准、
+# 或待核准直接被標為已付款。
+TRANSITIONS = {
+    "procurement": {
+        "submitted": {"approved", "rejected"},
+        "approved": {"ordered", "rejected"},
+        "rejected": set(),
+        "ordered": set(),
+    },
+    "payment": {
+        "submitted": {"approved", "rejected"},
+        "approved": {"paid", "rejected"},
+        "rejected": set(),
+        "paid": set(),
+    },
+}
+
+STATUS_LABEL = {
+    "submitted": "待核准", "approved": "已核准", "rejected": "已駁回",
+    "ordered": "已下單", "paid": "已付款",
+}
+
+
+def can_transition(kind, current, target):
+    return target in TRANSITIONS.get(kind, {}).get(current, set())
+
+
+def status_label(status):
+    return STATUS_LABEL.get(status, status)
+
+
 def secure_name(filename):
     return secure_filename(filename)
 

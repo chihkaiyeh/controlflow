@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 
 from . import db
 from .models import Project, ProcurementRequest, PaymentRequest
-from .utils import next_code
+from .utils import next_code, can_transition, status_label
 
 pay_bp = Blueprint("payments", __name__)
 
@@ -59,13 +59,20 @@ def approve(pid):
         flash("無權核准", "danger")
         return redirect(url_for("payments.index"))
     py = PaymentRequest.query.get_or_404(pid)
-    if request.form.get("decision") == "reject":
-        py.status = "rejected"
-        flash(f"{py.code} 已駁回", "warning")
-    else:
-        py.status = "approved"
+    decision = request.form.get("decision")
+    if decision not in ("approve", "reject"):
+        flash("無效的核准動作", "danger")
+        return redirect(url_for("payments.index"))
+    target = "rejected" if decision == "reject" else "approved"
+    if not can_transition("payment", py.status, target):
+        flash(f"{py.code} 目前為「{status_label(py.status)}」，無法變更為「{status_label(target)}」", "warning")
+        return redirect(url_for("payments.index"))
+    py.status = target
+    if target == "approved":
         py.approver_id = current_user.id
         flash(f"{py.code} 已核准", "success")
+    else:
+        flash(f"{py.code} 已駁回", "warning")
     db.session.commit()
     return redirect(url_for("payments.index"))
 
@@ -77,6 +84,9 @@ def paid(pid):
         flash("無權操作", "danger")
         return redirect(url_for("payments.index"))
     py = PaymentRequest.query.get_or_404(pid)
+    if not can_transition("payment", py.status, "paid"):
+        flash(f"{py.code} 目前為「{status_label(py.status)}」，無法標記為已付款", "warning")
+        return redirect(url_for("payments.index"))
     py.status = "paid"
     db.session.commit()
     flash(f"{py.code} 標記為已付款", "info")

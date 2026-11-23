@@ -54,20 +54,23 @@ cd controlflow
 ### 3. 設定環境變數（安全）
 建立 `.env`（**不要 commit**，已寫入 .gitignore 預設排除 `.env`）：
 ```
+# 必填，docker-compose 會阻止空白 / 預設值啟動
 SECRET_KEY=請改成一段夠長的隨機字串
 # 若要把 DB/附件直接放在 NAS 掛載點，可改這兩行指向掛載目錄
 # DATABASE_URL=sqlite:////mnt/nas/controlflow/app.db
 # UPLOAD_FOLDER=/mnt/nas/controlflow/uploads
 ```
 > 強烈建議 `SECRET_KEY` 用 `python -c "import secrets;print(secrets.token_hex(32))"` 產生。
+> 容器以 `FLASK_ENV=production` 啟動，SECRET_KEY 用預設值會直接拒絕啟動。
 
 ### 4. 啟動
 ```bash
 docker compose up -d --build
 # 第一次啟動後，建立管理員帳號
-docker compose exec controlflow python seed.py
+docker compose exec -e ADMIN_PASSWORD='你的強密碼（至少10字元）' controlflow python seed.py
 ```
-瀏覽器開 `http://<主機IP>:5000` 即可登入（預設 admin / admin123，請立即改密）。
+瀏覽器開 `http://<主機IP>:5000` 即可登入。初始管理員 `admin` 的密碼就是上面的
+`ADMIN_PASSWORD`，不再有 `admin123` 預設值；請立即為每位員工建立專屬帳號。
 
 ---
 

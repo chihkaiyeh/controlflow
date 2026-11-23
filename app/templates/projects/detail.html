@@ -32,6 +32,7 @@
         <p class="mb-0"><strong>描述：</strong>{{ p.description or '（無）' }}</p>
         {% if p.status != 'closed' %}
         <form method="post" action="{{ url_for('projects.close', pid=p.id) }}" class="mt-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-sm btn-dark" onclick="return confirm('確定結案？')">結案</button>
         </form>
         {% endif %}
@@ -80,6 +81,7 @@
       <div class="card-body">
         <form method="post" action="{{ url_for('projects.upload', pid=p.id) }}"
               enctype="multipart/form-data" class="mb-3 d-flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="file" name="file" class="form-control form-control-sm" required>
           <button class="btn btn-sm btn-primary">上傳</button>
         </form>
@@ -92,6 +94,7 @@
               <small class="text-muted">（{{ human_size(a.size) }}）</small>
             </span>
             <form method="post" action="{{ url_for('projects.attachment_delete', pid=p.id, aid=a.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="btn btn-sm btn-outline-danger">刪除</button>
             </form>
           </li>

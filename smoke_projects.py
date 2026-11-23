@@ -3,10 +3,11 @@ from app import create_app
 from app.models import Project, db
 
 app = create_app()
+app.config["WTF_CSRF_ENABLED"] = False  # 冒煙測試直接 POST，不帶 CSRF token
 
 with app.test_client() as client:
     # 登入 admin
-    client.post("/login", data={"username": "admin", "password": "admin123"})
+    client.post("/login", data={"username": "admin", "password": "admin12345"})
 
     before = Project.query.count()
 

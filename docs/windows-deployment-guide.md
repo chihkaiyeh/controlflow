@@ -7,6 +7,10 @@
 > 為什麼 Windows 上不用軟體鏡像（Storage Spaces / RAID）：USB 外接碟容易被
 > Windows 判定為可移除裝置而掉出集區、重建易出錯。改用「一碟即時 + 一碟冷備
 > + NAS 第三份」的 3-2-1 策略，更穩也更簡單。
+>
+> **路線說明**：本文是 **Windows 原生路線（Unitek JBOD）**。另一份
+> [地端設備架構規劃](on-prem-infra-plan.md) 是 **Ubuntu + Docker 路線（ACASIS JBOD + mdadm RAID1）**。
+> 兩者硬體配置不同是刻意的，請依實際作業系統選擇對應文件，不要混用。
 
 ---
 
@@ -94,13 +98,18 @@ python run.py
 cd C:\controlflow
 call venv\Scripts\activate
 $env:FLASK_ENV="production"
+$env:SECRET_KEY="貼上第四步產生的64字元"   # production 模式沒設會拒絕啟動
 $env:DATABASE_URL="sqlite:///D:/controlflow-data/app.db"
 $env:UPLOAD_FOLDER="D:\controlflow-data\uploads"
+$env:ADMIN_PASSWORD="換成你自己的強密碼（至少10字元）"
 python seed.py
 ```
 
-- 會在 `D:\controlflow-data\app.db` 建好資料庫與預設管理員。
-- 預設帳號 `admin`／密碼請**登入後立刻到「成員管理」改掉**。
+- 會在 `D:\controlflow-data\app.db` 建好資料庫與管理員帳號 `admin`。
+- **不再有 `admin123` 預設密碼**：初始密碼就是上面設定的 `ADMIN_PASSWORD`。
+- 提醒：這行指令會留在 PowerShell 歷程記錄中；若在意，可改用
+  `$env:ADMIN_PASSWORD = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Read-Host 'Admin password' -AsSecureString)))` 輸入。
+- 登入後仍建議到「成員管理」為每位員工建立專屬帳號，不要用共用 admin。
 
 ---
 
@@ -142,21 +151,43 @@ cd C:\controlflow
 2. 建立 `C:\controlflow\backup.bat`：
    ```bat
    @echo off
+   setlocal
+   set PY=C:\controlflow\venv\Scripts\python.exe
    set SRC=D:\controlflow-data
    set COLD=E:\controlflow-coldbackup
    set NAS=\\<NAS-IP>\controlflow
-   set STAMP=%DATE:~0,4%%DATE:~5,2%%DATE:~8,2%_%TIME:~0,2%%TIME:~3,2%
-   set STAMP=%STAMP: =0%
+
+   REM 1) 用 SQLite 在線備份產生一致性快照，不需停服務
+   if not exist "%SRC%\snapshots" mkdir "%SRC%\snapshots"
+   for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set STAMP=%%i
+   "%PY%" -c "import sqlite3; a=sqlite3.connect(r'%SRC%\app.db'); b=sqlite3.connect(r'%SRC%\snapshots\app_%STAMP%.db'); a.backup(b); b.close(); a.close()"
+   if errorlevel 1 goto :fail
+
+   REM 2) 驗證快照完整性；損壞就不往外複製
+   "%PY%" -c "import sqlite3; c=sqlite3.connect(r'%SRC%\snapshots\app_%STAMP%.db'); print(c.execute('PRAGMA integrity_check').fetchone()[0])" > "%SRC%\snapshots\integrity_%STAMP%.txt"
+   findstr /x "ok" "%SRC%\snapshots\integrity_%STAMP%.txt" >nul || goto :fail
+
+   REM 3) 複製到冷備碟與 NAS。用 /E 不用 /MIR，避免來源異常時反向刪除備份
    if not exist "%COLD%" mkdir "%COLD%"
-   robocopy "%SRC%" "%COLD%\latest" /MIR /R:1 /W:1
+   robocopy "%SRC%" "%COLD%\latest" /E /R:1 /W:1
    robocopy "%SRC%" "%COLD%\%STAMP%" /E /R:1 /W:1
-   robocopy "%SRC%" "%NAS%" /MIR /R:1 /W:1
+   robocopy "%SRC%" "%NAS%" /E /R:1 /W:1
    echo Backup done %STAMP%
+   exit /b 0
+
+   :fail
+   echo Backup FAILED %STAMP% 1>&2
+   exit /b 1
    ```
-   - `latest` 鏡像 + 每日帶時間戳的增量副本 + NAS 同步，三份異地/異介質。
-3. 測試：執行 `C:\controlflow\backup.bat`，確認 `E:` 與 NAS 出現檔案。
+   - 時間戳改用 `Get-Date -Format yyyyMMdd_HHmmss`，不受 Windows 地區設定影響。
+   - 資料庫用 `sqlite3.backup()` 在線快照 + `PRAGMA integrity_check`，比直接 copy 正在寫入的 `app.db` 安全。
+   - `robocopy` 改 `/E`：只新增/更新，不做鏡像刪除；舊備份另外用 `forfiles` 依日期清理，避免一次誤刪。
+3. 測試：執行 `C:\controlflow\backup.bat`，確認 `E:` 與 NAS 出現檔案，且 `integrity_*.txt` 內容為 `ok`。
 4. 排程：工作排程器**建立基本工作** → 每日 03:00 → 執行程式 `C:\controlflow\backup.bat`。
-5. 清理舊備份（選配）：在工作排程器加每月一次 `forfiles` 刪 30 天前時間戳資料夾。
+5. 清理舊備份：每月一次 `forfiles /p E:\controlflow-coldbackup /m "app_*.db" /d -30 /c "cmd /c del @path"`，並同步清掉對應的 `integrity_*.txt`。
+
+> **每月至少做一次還原演練**：把某份快照複製到另一個路徑，用 `DATABASE_URL` 指向它啟動，
+> 實際登入確認資料可讀。沒有還原演練的備份只能算「可能有用」。
 
 > 建議**每周至少一次把冷備碟 E: 拔下離線存放**（旋轉式輪替），防勒索軟體一併加密。
 
@@ -179,8 +210,10 @@ cd C:\controlflow
 
 ## 十一、上線前安全清單
 
-- [ ] 登入後立刻改 `admin` 密碼，為每位員工建專屬帳號與角色。
-- [ ] `start.bat` 的 `SECRET_KEY` 是唯一隨機值，不要提交進 git。
+- [ ] `ADMIN_PASSWORD` 已設定強密碼，`seed.py` 建立 admin 時使用；沒有殘留 `admin123`。
+- [ ] 為每位員工建專屬帳號與角色，不要用共用 admin。
+- [ ] `start.bat` 的 `SECRET_KEY` 是唯一隨機值，不要提交進 git；production 模式下用預設值會拒絕啟動。
+- [ ] 所有表單都有 CSRF token（程式碼已內建）；每日備份與還原演練已排程。
 - [ ] Windows 防火牆：只對公司網段開放 5000（或經 Caddy 的 443），別對外網開放 5000。
 - [ ] **Windows 更新**：設定 → Windows Update →**使用時段**設成非上班時間（如 01:00–05:00），並開啟「盡快取得最新更新」以外的延後，避免上班時間自動重開機中斷服務。
 - [ ] 電源選項：**高效能/永不睡眠、永不休眠**，合上筆電螢幕不休眠。
